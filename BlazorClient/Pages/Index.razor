@@ -1,0 +1,56 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject HubConnection hubConnection
+<PageTitle>Index</PageTitle>
+
+<h1>Cliente Websocket</h1>
+
+<ol>
+    @foreach (var person in persons)
+    {
+        <li>@($"{person.Name} {person.LastName}, {person.Age} años")</li>
+    }
+
+</ol>
+
+
+@code {
+    List<PersonVM> persons;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            persons = new();
+
+
+            if (hubConnection.State == HubConnectionState.Disconnected)
+            {
+                await hubConnection.StartAsync();
+            }
+
+            hubConnection.On<PersonVM>("receivePerson", async person =>
+            {
+                Console.WriteLine($"{person.Name} {person.LastName}");
+                await InvokeAsync(() =>
+                {
+                    persons.Add(person);
+                    StateHasChanged();
+                });
+
+            });
+
+
+
+            await base.OnInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+    }
+
+
+}
